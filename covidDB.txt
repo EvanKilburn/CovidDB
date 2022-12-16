@@ -1,0 +1,289 @@
+drop database covidDB;
+create database covidDB;
+
+CREATE TABLE Company(
+Name			VARCHAR(17)	NOT NULL,
+Street			VARCHAR(50),
+City			VARCHAR(50),
+Province		CHAR(2),
+Postal_Code		VARCHAR(7),
+Country			VARCHAR(50) NOT NULL,
+PRIMARY KEY(Name)
+);
+
+CREATE TABLE Lot(
+Lot_Number		CHAR(6)		NOT NULL,
+Produced_Date	DATE		NOT NULL,
+Expiry			DATE		NOT NULL,
+Doses			INTEGER		NOT NULL,
+Company_Name	VARCHAR(50)	NOT NULL,
+PRIMARY KEY(Lot_Number),
+FOREIGN KEY(Company_Name) REFERENCES Company(Name) ON DELETE RESTRICT
+);
+
+CREATE TABLE Vaccination_Site(
+Name			VARCHAR(50)	NOT NULL,
+Street			VARCHAR(50)	NOT NULL,
+City			VARCHAR(50)	NOT NULL,
+Province		CHAR(2)		NOT NULL,
+Postal_Code		VARCHAR(7),
+PRIMARY KEY(Name)
+);
+
+CREATE TABLE Site_Dates(
+Name			VARCHAR(50) NOT NULL,
+Site_Date 		DATE 		NOT NULL,
+PRIMARY KEY(Name, Site_Date),
+FOREIGN KEY(Name) REFERENCES Vaccination_Site(Name) ON DELETE CASCADE
+);
+
+CREATE TABLE Patient(
+OHIP_Number		CHAR(10)	NOT NULL,
+Birthdate		DATE		NOT NULL,
+First_Name		VARCHAR(50),
+Middle_Name		VARCHAR(50),
+Last_Name		VARCHAR(50),
+PRIMARY KEY(OHIP_Number)
+);
+
+CREATE TABLE Spouse(
+OHIP_Number		CHAR(10)	NOT NULL,
+Phone_Number	VARCHAR(15),
+First_Name		VARCHAR(50),
+Middle_Name		VARCHAR(50),
+Last_Name		VARCHAR(50),
+Partner_OHIP	CHAR(10)	NOT NULL,
+PRIMARY KEY(OHIP_Number),
+FOREIGN KEY(Partner_OHIP) REFERENCES Patient(OHIP_Number) ON DELETE CASCADE
+);
+
+CREATE TABLE Health_Care(
+ID				INTEGER		NOT NULL,
+First_Name		VARCHAR(50),
+Middle_Name		VARCHAR(50),
+Last_Name		VARCHAR(50),
+PRIMARY KEY(ID)
+);
+
+CREATE TABLE Health_Care_Credentials(
+ID 				INTEGER 	NOT NULL,
+Credential 		CHAR(2)		NOT NULL,
+PRIMARY KEY(ID, Credential),
+FOREIGN KEY(ID) REFERENCES Health_Care(ID) ON DELETE CASCADE
+);
+
+CREATE TABLE Nurse(
+ID 				INTEGER		NOT NULL,
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Health_Care(ID) ON DELETE CASCADE
+);
+
+CREATE TABLE Medical_Practice(
+Name 			VARCHAR(50)	NOT NULL,
+Phone_Number	VARCHAR(12),
+PRIMARY KEY(Name)
+);
+
+CREATE TABLE Doctor(
+ID 				INTEGER		NOT NULL,
+Practice_Name	VARCHAR(50) NOT NULL,
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Health_Care(ID) ON DELETE CASCADE,
+FOREIGN KEY(Practice_Name) REFERENCES Medical_Practice(Name) ON DELETE RESTRICT
+);
+
+CREATE TABLE Distributed_To(
+Lot_Number		CHAR(6)		NOT NULL,
+Name 			VARCHAR(50)	NOT NULL,
+PRIMARY KEY(Lot_Number, Name),
+FOREIGN KEY(Lot_Number) REFERENCES Lot(Lot_Number) ON DELETE CASCADE,
+FOREIGN KEY(Name) REFERENCES Vaccination_Site(Name) ON DELETE RESTRICT
+);
+
+CREATE TABLE Employed(
+Name 			VARCHAR(50)	NOT NULL,
+ID				INTEGER		NOT NULL,
+PRIMARY KEY(ID, Name),
+FOREIGN KEY(ID) REFERENCES Health_Care(ID) ON DELETE CASCADE,
+FOREIGN KEY(Name) REFERENCES Vaccination_Site(Name) ON DELETE CASCADE
+);
+
+CREATE TABLE Vaccinated(
+Name 			VARCHAR(50)	NOT NULL,
+Lot_Number		VARCHAR(50)	NOT NULL,
+OHIP_Number		CHAR(10)	NOT NULL,
+Vaccinated_Date	DATE 		NOT NULL,
+Vaccinated_Time	TIME,
+PRIMARY KEY(Lot_Number, Name, OHIP_Number),
+FOREIGN KEY(Lot_Number) REFERENCES Lot(Lot_Number) ON DELETE RESTRICT,
+FOREIGN KEY(OHIP_Number) REFERENCES Patient(OHIP_Number) ON DELETE CASCADE,
+FOREIGN KEY(Name) REFERENCES Vaccination_Site(Name) ON DELETE RESTRICT
+);
+
+insert into Company values
+('Pfizer', '235 East 42nd Street', 'New York City', 'NY', NULL, 'United States of America'),
+('Moderna', '200 Technology Square', 'Cambridge', 'MA', NULL, 'United States of America'),
+('Johnson & Johnson', 'One Johnson & Johnson Plaza', 'New Brunswick', 'NJ', NULL, 'United States of America')
+;
+
+insert into Lot values
+('PF2001', '2022-01-01', '2022-12-21', 300, 'Pfizer'),
+('PF2002', '2022-01-02', '2022-12-22', 600, 'Pfizer'),
+('PF2003', '2022-01-03', '2022-12-23', 300, 'Pfizer'),
+('MR1000', '2022-02-01', '2022-12-20', 1000, 'Moderna'),
+('MR2000', '2022-02-01', '2022-12-20', 2000, 'Moderna'),
+('MR0500', '2022-01-01', '2022-11-20', 1000, 'Moderna'),
+('JJ0001', '2022-01-10', '2022-06-08', 500, 'Johnson & Johnson'),
+('JJ0002', '2022-01-11', '2022-06-09', 600, 'Johnson & Johnson'),
+('JJ0003', '2022-01-12', '2022-06-10', 100, 'Johnson & Johnson')
+;
+
+insert into Vaccination_Site values
+('Cataraqui Center', '945 Gardiners Rd', 'Kingston', 'ON', 'K7M 7H4'),
+('Portsmouth Olympic Harbour', '53 Yonge Street', 'Kingston', 'ON', 'K7M 6G4'),
+('KFLA Public Health Napanee', '99 Advance Ave', 'Napanee', 'ON', 'K7R 3Y6'),
+('Selby Community Hall', '114B Pleasant Dr', 'Selby', 'ON', 'K0K 2Z0'),
+('Ray Twinney Recreation Complex', '100 Eagle St W', 'Newmarket', 'ON', 'L3Y 1J4'),
+('EG Vaccination Clinic', '17250 Yonge Street', 'Newmarket', 'ON', 'L3Y 4W5'),
+('York Region Administrative Centre', '31 Princess Street', 'Mount Albert', 'ON', 'L0G 1M0'),
+('Georgina Ice Palace', '90 Wexford Drive', 'Keswick', 'ON', 'L4P 3Z1')
+;
+
+insert into Site_Dates values
+('Cataraqui Center', '2022-02-01'),
+('Cataraqui Center', '2022-02-02'),
+('Portsmouth Olympic Harbour', '2022-02-02'),
+('KFLA Public Health Napanee', '2022-01-02'),
+('Selby Community Hall', '2022-01-03'),
+('Ray Twinney Recreation Complex', '2022-01-04'),
+('Ray Twinney Recreation Complex', '2022-01-05'),
+('Ray Twinney Recreation Complex', '2022-01-06'),
+('EG Vaccination Clinic', '2022-01-01'),
+('York Region Administrative Centre', '2022-02-01'),
+('York Region Administrative Centre', '2022-02-02'),
+('Georgina Ice Palace', '2022-01-01')
+;
+
+insert into Patient values
+('1234123123', '2001-09-01', 'Evan', 'Kangaroo', 'Kilburn'),
+('1234123124', '2001-09-04', 'Ryan', 'John', 'Taylor'),
+('1234123125', '2001-06-02', 'Lebron', NULL, 'James'),
+('1234123126', '1992-07-22', 'Hulk', NULL, NULL),
+('1234123127', '1994-06-22', NULL, NULL, 'Gabriel'),
+('1234123128', '1994-07-13', 'Dwayne', 'Rock', 'Johnson'),
+('1234123129', '2001-09-01', 'Kyle', 'Evan', 'Taylor'),
+('1234123130', '2001-07-19', 'Avee', NULL, NULL)
+;
+
+insert into SPOUSE values
+('4321321321', '6476476477', 'Jill', 'May', 'Doe', '1234123123'),
+('4321321322', '9059059055', 'Margaret', NULL, 'Curry', '1234123124'),
+('4321321323', '1801801811', 'Julia', NULL, 'Spencer', '1234123128'),
+('4321321324', '9059059056', 'Juan', 'Ross', 'Deagle', '1234123125'),
+('4321321325', '9059059057', 'Megan', 'Gloria', 'Jones', '1234123129'),
+('4321321326', '9059059058', 'Zoe', 'Pink', 'Purple', '1234123130')
+;
+
+
+insert into Health_Care values
+(1, 'Claire', 'Mint', 'Kilburn'),
+(2, 'Jimmy', 'Zehao', 'Lu'),
+(3, 'Kevin', NULL, 'Marc'),
+(4, 'Synthia', 'Wellburger', 'Konte'),
+(5, 'NGolo', NULL, 'Kante'),
+(6, 'OG', 'Moo', 'Anunoby'),
+(7, 'Gary', 'Junior', 'Trent'),
+(8, 'Jamie', 'James', 'Kilburn'),
+(9, 'Rowley', 'Zackary', 'Kipin'),
+(10, 'Robert', NULL, 'Roland'),
+(11, 'Tyler', NULL, 'Jones'),
+(12, 'Sebastian', 'Mason', 'Gommes')
+;
+
+insert into Nurse values
+(1),
+(2),
+(3),
+(4),
+(5),
+(6)
+;
+
+insert into Medical_Practice values
+('Markham Stoufville Hospital', '9051211133'),
+('Southlake Hospital', '9051211133'),
+('Sick Kids Hospital', '9051211133'),
+('Mount Sinai Hospital', '9051211133'),
+('Kingston General Health', '9051211133'),
+('Lake of Bays Hospital', '9051211133')
+;
+
+insert into Doctor values
+(7, 'Markham Stoufville Hospital'),
+(8, 'Southlake Hospital'),
+(9, 'Sick Kids Hospital'),
+(10, 'Mount Sinai Hospital'),
+(11, 'Kingston General Health'),
+(12, 'Lake of Bays Hospital')
+;
+
+insert into Health_Care_Credentials values
+(1, 'RN'),
+(1, 'NP'),
+(2, 'RN'),
+(3, 'RN'),
+(4, 'RN'),
+(5, 'RN'),
+(5, 'NP'),
+(6, 'RN'),
+(7, 'DR'),
+(8, 'DR'),
+(9, 'DR'),
+(10, 'DR'),
+(11, 'DR'),
+(12, 'DR')
+;
+
+insert into Distributed_To values
+('PF2001', 'Cataraqui Center'),
+('PF2002', 'Portsmouth Olympic Harbour'),
+('PF2003', 'KFLA Public Health Napanee'),
+('MR1000', 'Selby Community Hall'),
+('MR2000', 'Ray Twinney Recreation Complex'),
+('MR0500', 'EG Vaccination Clinic'),
+('JJ0001', 'York Region Administrative Centre'),
+('JJ0002', 'Georgina Ice Palace'),
+('JJ0003', 'Ray Twinney Recreation Complex')
+;
+
+insert into Employed values
+('Cataraqui Center', 1),
+('Cataraqui Center', 7),
+('Portsmouth Olympic Harbour', 2),
+('Portsmouth Olympic Harbour', 8),
+('KFLA Public Health Napanee', 3),
+('KFLA Public Health Napanee', 9),
+('Selby Community Hall', 4),
+('Selby Community Hall', 10),
+('Ray Twinney Recreation Complex', 1),
+('Ray Twinney Recreation Complex', 8),
+('EG Vaccination Clinic', 5),
+('EG Vaccination Clinic', 11),
+('York Region Administrative Centre', 6),
+('York Region Administrative Centre', 12),
+('Georgina Ice Palace', 3),
+('Georgina Ice Palace', 12)
+;
+
+insert into Vaccinated values
+('York Region Administrative Centre', 'JJ0001', '1234123123', '2022-02-01', '23:01:30'),
+('Cataraqui Center', 'PF2001', '1234123124', '2022-02-02', '03:04:05'),
+('Portsmouth Olympic Harbour', 'PF2002', '1234123125', '2022-02-02','10:20:00'),
+('KFLA Public Health Napanee', 'PF2003', '1234123126', '2022-01-02','10:20:00'),
+('Selby Community Hall', 'MR1000', '1234123127', '2022-01-03', '11:12:31'),
+('Ray Twinney Recreation Complex', 'MR2000', '1234123128', '2022-01-04', '11:13:10'),
+('EG Vaccination Clinic', 'MR0500', '1234123129', '2022-01-01', '13:12:12'),
+('York Region Administrative Centre', 'JJ0001', '1234123130', '2022-02-02', '15:10:10'),
+('Georgina Ice Palace', 'JJ0002', '1234123123', '2022-01-01', '16:03:04'),
+('Ray Twinney Recreation Complex', 'JJ0002', '1234123124', '2022-01-06', '15:03:59')
+;
